@@ -421,6 +421,13 @@
                             </span>
                         </th>
                         <th>
+                            Annual Replacement Opportunity (Units)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Estimated number of units retiring annually that are eligible for replacement. This is a key driver for new installations.</span>
+                            </span>
+                        </th>
+                        <th>
                             New Installations (Units)
                             <span class="tooltip-container">
                                 <span class="info-icon">&#9432;</span>
@@ -488,6 +495,13 @@
                             <span class="tooltip-container">
                                 <span class="info-icon">&#9432;</span>
                                 <span class="tooltip-text">Percentage of the annual replacement opportunity that enrolls each year.</span>
+                            </span>
+                        </th>
+                        <th>
+                            Annual Replacement Opportunity (Units)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Estimated number of units retiring annually that are eligible for replacement. This is a key driver for new installations.</span>
                             </span>
                         </th>
                         <th>
@@ -678,8 +692,6 @@
             hvacParticipationRate: document.getElementById('hvacParticipationRate'), 
             whParticipationRate: document.getElementById('whParticipationRate'),   
             realWorldDerateFactor: document.getElementById('realWorldDerateFactor'),
-            // eventsPerYear: document.getElementById('eventsPerYear'), // Removed from inputs
-            // avgHoursPerEvent: document.getElementById('avgHoursPerEvent'), // Removed from inputs
         };
 
         // References to table bodies and chart container
@@ -740,6 +752,7 @@
                 // Eligible Market Remaining now tracks the total eligible devices not yet enrolled
                 eligibleMarketRemaining: effectiveEligibleInstalledBase, 
                 annualAdoptionRate: 0,
+                annualReplacementOpportunity: annualReplacementOpportunityInput, // Added for Year 0
                 newInstallations: 0,
                 cumulativeInstallations: 0,
                 devicesRetired: 0,
@@ -787,6 +800,7 @@
                     year: y,
                     eligibleMarketRemaining: eligibleMarketRemaining,
                     annualAdoptionRate: annualAdoptionRate,
+                    annualReplacementOpportunity: annualReplacementOpportunityInput, // Added for each year
                     newInstallations: newInstallations,
                     cumulativeInstallations: cumulativeInstallations,
                     devicesRetired: devicesRetired,
@@ -865,6 +879,7 @@
                     <td>${row.year}</td>
                     <td>${row.eligibleMarketRemaining.toLocaleString()}</td>
                     <td>${(row.annualAdoptionRate * 100).toFixed(2)}%</td>
+                    <td>${row.annualReplacementOpportunity.toLocaleString()}</td> <!-- New Column -->
                     <td>${row.newInstallations.toLocaleString()}</td>
                     <td>${row.cumulativeInstallations.toLocaleString()}</td>
                     <td>${row.devicesRetired.toLocaleString()}</td>

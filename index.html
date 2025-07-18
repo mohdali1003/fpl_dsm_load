@@ -197,9 +197,51 @@
             text-align: center;
         }
 
-        /* Overall Summary Box - New design */
-        /* This section is removed as per user request */
-
+        /* Tooltip styles */
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #334155; /* slate-700 */
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Position above the text */
+            left: 50%;
+            margin-left: -100px; /* Center the tooltip */
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.7rem;
+            line-height: 1.2;
+            pointer-events: none; /* Allows clicks through tooltip */
+        }
+        .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #334155 transparent transparent transparent;
+        }
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .info-icon {
+            font-size: 0.7em; /* Smaller info icon */
+            vertical-align: super; /* Aligns it nicely with text */
+            margin-left: 0.2em;
+            color: #64748b; /* slate-500 */
+        }
 
         /* Responsive adjustments */
         @media (max-width: 768px) {
@@ -228,18 +270,10 @@
             .chart-value {
                 min-width: 50px;
             }
-            /* .summary-grid-cards {
-                grid-template-columns: 1fr;
+            .tooltip-text {
+                width: 150px; /* Smaller tooltip on mobile */
+                margin-left: -75px;
             }
-            .summary-card-new h3 {
-                font-size: 1rem;
-            }
-            .overall-total-load {
-                font-size: 1rem;
-            }
-            .overall-total-load strong {
-                font-size: 1.25rem;
-            } */
         }
     </style>
 </head>
@@ -247,31 +281,6 @@
     <div class="model-container">
         <h1>FPL Controllable Load Financial Model</h1>
         <p class="text-gray-600 text-center mb-8">Quantifying Load Reduction from HVAC & Water Heater On-Bill Programs</p>
-
-        <!-- Overall Summary Section - This entire section is removed as per user request -->
-        <!-- <div class="overall-summary-new">
-            <h2>Projected Program Impact (End of Year <span id="summaryProjectionYears"></span>)</h2>
-            <div class="summary-grid-cards">
-                <div class="summary-card-new">
-                    <h3>Central HVAC Program</h3>
-                    <p>Total Active Devices: <strong id="summaryHvacActive">0</strong> units</p>
-                    <p>Controllable Load: <strong id="summaryHvacLoad">0 kW</strong></p>
-                    <p>Annual Energy Saved: <strong id="summaryHvacEnergy">0 kWh</strong></p>
-                </div>
-                <div class="summary-card-new">
-                    <h3>Water Heater Program</h3>
-                    <p>Total Active Devices: <strong id="summaryWhActive">0</strong> units</p>
-                    <p>Controllable Load: <strong id="summaryWhLoad">0 kW</strong></p>
-                    <p>Annual Energy Saved: <strong id="summaryWhEnergy">0 kWh</strong></p>
-                </div>
-            </div>
-            <p class="overall-total-load">
-                Overall Total Controllable Load: <strong id="summaryOverallLoad">0 MW</strong>
-            </p>
-            <p class="overall-total-load">
-                Overall Annual Energy Saved: <strong id="summaryOverallEnergy">0 GWh</strong>
-            </p>
-        </div> -->
 
         <!-- Tab 1: Assumptions & Inputs -->
         <h2>1. Assumptions & Inputs</h2>
@@ -284,44 +293,54 @@
                 <p class="input-explanation">Number of years for the model's projection.</p>
             </div>
             <div class="input-group">
-                <label for="totalAddressableHomeowners">B. Total Addressable Homeowners (FPL Service Territory)</label>
+                <label for="totalAddressableHomeowners">B. Total Installed Base (FPL Service Territory)</label>
                 <input type="number" id="totalAddressableHomeowners" value="3200000" min="100000">
-                <p class="input-explanation">Total FPL residential homeowners in the service area.</p>
+                <p class="input-explanation">Total existing homes with relevant devices (HVAC/WH) in the FPL service area.</p>
             </div>
             <div class="input-group">
-                <label for="eligibleMarketPenetration">Eligible Market Penetration (%)</label>
+                <label for="eligibleMarketPenetration">Eligible Installed Base Penetration (%)</label>
                 <input type="number" id="eligibleMarketPenetration" value="85" step="1" min="0" max="100">
-                <p class="input-explanation">Percentage of homes that qualify for the program (e.g., central AC, electric water heater).</p>
+                <p class="input-explanation">Percentage of the total installed base that qualifies for the program (e.g., central AC, electric water heater, owner-occupied).</p>
+            </div>
+            <div class="input-group">
+                <label for="hvacLifespan">HVAC Device Lifespan (Years)</label>
+                <input type="number" id="hvacLifespan" value="12" min="5">
+                <p class="input-explanation">Average expected useful life of an HVAC unit.</p>
+            </div>
+            <div class="input-group">
+                <label for="whLifespan">Water Heater Device Lifespan (Years)</label>
+                <input type="number" id="whLifespan" value="8" min="5">
+                <p class="input-explanation">Average expected useful life of a Water Heater.</p>
+            </div>
+            <div class="input-group">
+                <label for="hvacAnnualReplacementOpportunity">HVAC Annual Replacement Opportunity (Units)</label>
+                <input type="number" id="hvacAnnualReplacementOpportunity" value="266667" min="0">
+                <p class="input-explanation">Estimated number of HVAC units retiring annually that are eligible for replacement. This drives program enrollment.</p>
+            </div>
+            <div class="input-group">
+                <label for="whAnnualReplacementOpportunity">Water Heater Annual Replacement Opportunity (Units)</label>
+                <input type="number" id="whAnnualReplacementOpportunity" value="400000" min="0">
+                <p class="input-explanation">Estimated number of Water Heater units retiring annually that are eligible for replacement. This drives program enrollment.</p>
             </div>
             <div class="input-group">
                 <label for="adoptionRateY1_2">Annual Adoption Rate - Year 1-2 (Ramp-up %)</label>
                 <input type="number" id="adoptionRateY1_2" value="0.5" step="0.1" min="0">
-                <p class="input-explanation">Yearly percentage of eligible homes joining the program during initial ramp-up.</p>
+                <p class="input-explanation">Yearly percentage of the annual replacement opportunity joining during initial ramp-up.</p>
             </div>
             <div class="input-group">
                 <label for="adoptionRateY3_5">Annual Adoption Rate - Year 3-5 (Growth %)</label>
                 <input type="number" id="adoptionRateY3_5" value="1.5" step="0.1" min="0">
-                <p class="input-explanation">Yearly percentage of eligible homes joining during the growth phase.</p>
+                <p class="input-explanation">Yearly percentage of the annual replacement opportunity joining during the growth phase.</p>
             </div>
             <div class="input-group">
                 <label for="adoptionRateY6_10">Annual Adoption Rate - Year 6-10 (Mature %)</label>
                 <input type="number" id="adoptionRateY6_10" value="1.0" step="0.1" min="0">
-                <p class="input-explanation">Yearly percentage of eligible homes joining during the mature phase.</p>
+                <p class="input-explanation">Yearly percentage of the annual replacement opportunity joining during the mature phase.</p>
             </div>
             <div class="input-group">
                 <label for="adoptionRateY11_15plus">Annual Adoption Rate - Year 11-15+ (Steady State %)</label>
                 <input type="number" id="adoptionRateY11_15plus" value="0.5" step="0.1" min="0">
-                <p class="input-explanation">Yearly percentage of eligible homes joining in the long-term (e.g., for replacements).</p>
-            </div>
-            <div class="input-group">
-                <label for="hvacLifespan">HVAC New Device Lifespan (Years)</label>
-                <input type="number" id="hvacLifespan" value="18" min="5">
-                <p class="input-explanation">Average life of a new HVAC unit installed through the program. (Note: If this is longer than the projection horizon, no retirements for this device type will appear in the tables).</p>
-            </div>
-            <div class="input-group">
-                <label for="whLifespan">Water Heater New Device Lifespan (Years)</label>
-                <input type="number" id="whLifespan" value="14" min="5">
-                <p class="input-explanation">Average life of a new Hybrid Electric Water Heater installed through the program.</p>
+                <p class="input-explanation">Yearly percentage of the annual replacement opportunity joining in the long-term.</p>
             </div>
             <div class="input-group">
                 <label for="hvacKwReduction">C. HVAC Average kW Reduction per Device (during event)</label>
@@ -334,29 +353,29 @@
                 <p class="input-explanation">Estimated power reduction (kW) from one water heater during a demand response event (0.5 - 1.0 kW range).</p>
             </div>
             <div class="input-group">
-                <label for="coincidenceFactor">Coincidence Factor (for Controllable Load %)</label>
-                <input type="number" id="coincidenceFactor" value="80" step="1" min="0" max="100">
-                <p class="input-explanation">Percentage of enrolled devices active and available for control during a peak event.</p>
+                <label for="hvacCoincidenceFactor">HVAC Coincidence Factor (%)</label>
+                <input type="number" id="hvacCoincidenceFactor" value="80" step="1" min="0" max="100">
+                <p class="input-explanation">Percentage of enrolled HVAC devices expected to be running during a peak event.</p>
             </div>
             <div class="input-group">
-                <label for="participationRate">Customer Participation/Availability Rate (during event %)</label>
-                <input type="number" id="participationRate" value="88" step="1" min="0" max="100">
-                <p class="input-explanation">Percentage of enrolled devices that respond during a control event (accounts for opt-outs).</p>
+                <label for="whCoincidenceFactor">Water Heater Coincidence Factor (%)</label>
+                <input type="number" id="whCoincidenceFactor" value="40" step="1" min="0" max="100">
+                <p class="input-explanation">Percentage of enrolled Water Heater devices expected to be actively heating during a peak event.</p>
+            </div>
+            <div class="input-group">
+                <label for="hvacParticipationRate">HVAC Customer Participation/Availability Rate (%)</label>
+                <input type="number" id="hvacParticipationRate" value="88" step="1" min="0" max="100">
+                <p class="input-explanation">Percentage of enrolled HVAC devices that respond during a control event (accounts for opt-outs).</p>
+            </div>
+            <div class="input-group">
+                <label for="whParticipationRate">Water Heater Customer Participation/Availability Rate (%)</label>
+                <input type="number" id="whParticipationRate" value="80" step="1" min="0" max="100">
+                <p class="input-explanation">Percentage of enrolled Water Heater devices that respond during a control event (accounts for opt-outs).</p>
             </div>
             <div class="input-group">
                 <label for="realWorldDerateFactor">Real-World Derate Factor (%)</label>
                 <input type="number" id="realWorldDerateFactor" value="85" step="1" min="0" max="100">
                 <p class="input-explanation">Factor for real-world losses (e.g., overrides, inefficiencies).</p>
-            </div>
-            <div class="input-group">
-                <label for="eventsPerYear">Average Events per Year</label>
-                <input type="number" id="eventsPerYear" value="25" step="1" min="0">
-                <p class="input-explanation">Average number of demand response events per year.</p>
-            </div>
-            <div class="input-group">
-                <label for="avgHoursPerEvent">Average Hours per Event</label>
-                <input type="number" id="avgHoursPerEvent" value="3" step="0.5" min="0.5">
-                <p class="input-explanation">Average duration (in hours) of a single demand response event.</p>
             </div>
         </div>
 
@@ -370,6 +389,8 @@
             <li>Load Control Event Frequency: Assumed: 5-10 events per month during peak season (e.g., June-September), with a maximum of 20-30 events annually. (Note: This frequency is a key operational decision; starting with lower frequency for a new program may enhance customer satisfaction and sustained participation.)</li>
             <li>Customer Override: Program includes a customer override option for load control events.</li>
             <li>Geographic Scope: FPL residential service territory.</li>
+            <li>Average Events per Year: 25.</li>
+            <li>Average Hours per Event: 3.</li>
             <li>No Existing FPL DR Programs: Model does not incorporate historical FPL-specific DR data.</li>
             <li>No Smart Meter Disaggregation: Model uses direct kW reduction estimates, not derived from smart meter disaggregation.</li>
         </ul>
@@ -385,14 +406,62 @@
                 <thead>
                     <tr>
                         <th>Year</th>
-                        <th>Eligible Market (Start of Year)</th>
-                        <th>Annual Adoption Rate (%)</th>
-                        <th>New Installations (Units)</th>
-                        <th>Cumulative Installations (Units)</th>
-                        <th>Devices Retired This Year (Units)</th>
-                        <th>Cumulative Active Devices (Units)</th>
-                        <th>Event Capacity (kW)</th>
-                        <th>Annual Energy Saved (kWh)</th>
+                        <th>
+                            Eligible Market (Remaining)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Total eligible devices not yet enrolled from the initial eligible installed base.</span>
+                            </span>
+                        </th>
+                        <th>
+                            Annual Adoption Rate (%)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Percentage of the annual replacement opportunity that enrolls each year.</span>
+                            </span>
+                        </th>
+                        <th>
+                            New Installations (Units)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Number of new devices installed through the program this year. Calculated from Annual Replacement Opportunity * Adoption Rate.</span>
+                            </span>
+                        </th>
+                        <th>
+                            Cumulative Installations (Units)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Total devices installed through the program up to this year.</span>
+                            </span>
+                        </th>
+                        <th>
+                            Devices Retired This Year (Units)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Devices installed through the program that have reached their end-of-life this year.</span>
+                            </span>
+                        </th>
+                        <th>
+                            Cumulative Active Devices (Units)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Total devices currently active and enrolled in the program (Installations - Retirements).</span>
+                            </span>
+                        </th>
+                        <th>
+                            Event Capacity (kW)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Instantaneous power reduction (kW) available during a single demand response event. Calculated from Active Devices * kW Reduction * Coincidence Factor * Participation Rate * Derate Factor.</span>
+                            </span>
+                        </th>
+                        <th>
+                            Annual Energy Saved (kWh)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Total energy saved (kWh) over the year. Calculated from Event Capacity * Events per Year * Hours per Event.</span>
+                            </span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -407,14 +476,62 @@
                 <thead>
                     <tr>
                         <th>Year</th>
-                        <th>Eligible Market (Start of Year)</th>
-                        <th>Annual Adoption Rate (%)</th>
-                        <th>New Installations (Units)</th>
-                        <th>Cumulative Installations (Units)</th>
-                        <th>Devices Retired This Year (Units)</th>
-                        <th>Cumulative Active Devices (Units)</th>
-                        <th>Event Capacity (kW)</th>
-                        <th>Annual Energy Saved (kWh)</th>
+                        <th>
+                            Eligible Market (Remaining)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Total eligible devices not yet enrolled from the initial eligible installed base.</span>
+                            </span>
+                        </th>
+                        <th>
+                            Annual Adoption Rate (%)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Percentage of the annual replacement opportunity that enrolls each year.</span>
+                            </span>
+                        </th>
+                        <th>
+                            New Installations (Units)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Number of new devices installed through the program this year. Calculated from Annual Replacement Opportunity * Adoption Rate.</span>
+                            </span>
+                        </th>
+                        <th>
+                            Cumulative Installations (Units)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Total devices installed through the program up to this year.</span>
+                            </span>
+                        </th>
+                        <th>
+                            Devices Retired This Year (Units)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Devices installed through the program that have reached their end-of-life this year.</span>
+                            </span>
+                        </th>
+                        <th>
+                            Cumulative Active Devices (Units)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Total devices currently active and enrolled in the program (Installations - Retirements).</span>
+                            </span>
+                        </th>
+                        <th>
+                            Event Capacity (kW)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Instantaneous power reduction (kW) available during a single demand response event. Calculated from Active Devices * kW Reduction * Coincidence Factor * Participation Rate * Derate Factor.</span>
+                            </span>
+                        </th>
+                        <th>
+                            Annual Energy Saved (kWh)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Total energy saved (kWh) over the year. Calculated from Event Capacity * Events per Year * Hours per Event.</span>
+                            </span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -431,11 +548,41 @@
                 <thead>
                     <tr>
                         <th>Year</th>
-                        <th>HVAC Event Capacity (kW)</th>
-                        <th>Water Heater Event Capacity (kW)</th>
-                        <th>Total Event Capacity (kW)</th>
-                        <th>Total Event Capacity (MW)</th>
-                        <th>Total Annual Energy Saved (GWh)</th>
+                        <th>
+                            HVAC Event Capacity (kW)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Instantaneous power reduction from HVAC devices.</span>
+                            </span>
+                        </th>
+                        <th>
+                            Water Heater Event Capacity (kW)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Instantaneous power reduction from Water Heater devices.</span>
+                            </span>
+                        </th>
+                        <th>
+                            Total Event Capacity (kW)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Combined instantaneous power reduction from all devices.</span>
+                            </span>
+                        </th>
+                        <th>
+                            Total Event Capacity (MW)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Total Event Capacity in Megawatts (kW / 1000).</span>
+                            </span>
+                        </th>
+                        <th>
+                            Total Annual Energy Saved (GWh)
+                            <span class="tooltip-container">
+                                <span class="info-icon">&#9432;</span>
+                                <span class="tooltip-text">Total energy saved over the year in Gigawatt-hours (kWh / 1,000,000).</span>
+                            </span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -460,31 +607,35 @@
             // Editable assumptions, linked to input fields
             assumptions: {
                 projectionYears: 15,
-                totalAddressableHomeowners: 3200000,
-                eligibleMarketPenetration: 0.85, // New: 85% as decimal
-                adoptionRateY1_2: 0.005, // Adjusted to 0.5% as decimal
-                adoptionRateY3_5: 0.015, // Adjusted to 1.5% as decimal
-                adoptionRateY6_10: 0.010, // Adjusted to 1.0% as decimal
-                adoptionRateY11_15plus: 0.005, // Adjusted to 0.5% as decimal
-                hvacLifespan: 18, // years
-                whLifespan: 14, // years
-                hvacKwReduction: 1.25, // kW - Updated to 1.25 (mid-range of 1.0-1.5)
-                whKwReduction: 0.75, // kW - Updated to 0.75 (mid-range of 0.5-1.0)
-                coincidenceFactor: 0.80, // 80% as decimal
-                participationRate: 0.88, // 88% as decimal
-                realWorldDerateFactor: 0.85, // New: 85% as decimal
-                eventsPerYear: 25, // New: Average number of events per year
-                avgHoursPerEvent: 3, // New: Average hours per event
+                totalAddressableHomeowners: 3200000, // Now represents initial installed base
+                eligibleMarketPenetration: 0.85, 
+                hvacLifespan: 12, // Changed default to 12 years
+                whLifespan: 8, // Changed default to 8 years
+                hvacAnnualReplacementOpportunity: 266667, // New input, default based on 3.2M * 0.85 / 12 (approx)
+                whAnnualReplacementOpportunity: 400000, // New input, default based on 3.2M * 0.85 / 8 (approx)
+                adoptionRateY1_2: 0.005, 
+                adoptionRateY3_5: 0.015, 
+                adoptionRateY6_10: 0.010, 
+                adoptionRateY11_15plus: 0.005, 
+                hvacKwReduction: 1.25, 
+                whKwReduction: 0.75, 
+                hvacCoincidenceFactor: 0.80, 
+                whCoincidenceFactor: 0.40, 
+                hvacParticipationRate: 0.88, 
+                whParticipationRate: 0.80, 
+                realWorldDerateFactor: 0.85, 
             },
             // Fixed assumptions, not user-editable but part of the model's context
             fixedAssumptions: {
                 programType: "On-Bill Financing for appliance replacement",
                 targetedAppliances: "High-efficiency Central HVAC (16 SEER2+) and Hybrid Electric Water Heaters (UEF 3.0+)",
                 loadControlTechnology: "Direct Load Control (DLC) switches/devices directly on the appliance",
-                loadControlEventDuration: "Typical 2-4 hours per event.", // Updated to match user's input
-                loadControlEventFrequency: "Assumed: 5-10 events per month during peak season (e.g., June-September), with a maximum of 20-30 events annually. (Note: This frequency is a key operational decision; starting with lower frequency for a new program may enhance customer satisfaction and sustained participation.)", // Updated to match user's input
+                loadControlEventDuration: "Typical 2-4 hours per event.", 
+                loadControlEventFrequency: "Assumed: 5-10 events per month during peak season (e.g., June-September), with a maximum of 20-30 events annually. (Note: This frequency is a key operational decision; starting with lower frequency for a new program may enhance customer satisfaction and sustained participation.)", 
                 customerOverride: "Program includes a customer override option for load control events",
                 geographicScope: "FPL residential service territory",
+                eventsPerYear: 25, // Moved to fixed
+                avgHoursPerEvent: 3, // Moved to fixed
                 noExistingDRPrograms: "Model does not incorporate historical FPL-specific DR data",
                 noSmartMeterDisaggregation: "Model uses direct kW reduction estimates, not derived from smart meter disaggregation."
             },
@@ -493,8 +644,8 @@
             whProjections: [],
             // Consolidated summary of controllable load and energy
             summary: [],
-            // Overall summary for the top section
-            overallSummary: { // This object is still needed for calculations even if not rendered
+            // Overall summary for the top section (data still calculated, just not rendered directly)
+            overallSummary: {
                 hvacActiveDevices: 0,
                 hvacControllableLoad: 0,
                 hvacAnnualEnergySaved: 0,
@@ -511,20 +662,24 @@
         const inputElements = {
             projectionYears: document.getElementById('projectionYears'),
             totalAddressableHomeowners: document.getElementById('totalAddressableHomeowners'),
-            eligibleMarketPenetration: document.getElementById('eligibleMarketPenetration'), // New input
+            eligibleMarketPenetration: document.getElementById('eligibleMarketPenetration'),
             adoptionRateY1_2: document.getElementById('adoptionRateY1_2'),
             adoptionRateY3_5: document.getElementById('adoptionRateY3_5'),
             adoptionRateY6_10: document.getElementById('adoptionRateY6_10'),
             adoptionRateY11_15plus: document.getElementById('adoptionRateY11_15plus'),
             hvacLifespan: document.getElementById('hvacLifespan'),
             whLifespan: document.getElementById('whLifespan'),
+            hvacAnnualReplacementOpportunity: document.getElementById('hvacAnnualReplacementOpportunity'), // New
+            whAnnualReplacementOpportunity: document.getElementById('whAnnualReplacementOpportunity'),     // New
             hvacKwReduction: document.getElementById('hvacKwReduction'),
             whKwReduction: document.getElementById('whKwReduction'),
-            coincidenceFactor: document.getElementById('coincidenceFactor'),
-            participationRate: document.getElementById('participationRate'),
-            realWorldDerateFactor: document.getElementById('realWorldDerateFactor'), // New input
-            eventsPerYear: document.getElementById('eventsPerYear'), // New input
-            avgHoursPerEvent: document.getElementById('avgHoursPerEvent'), // New input
+            hvacCoincidenceFactor: document.getElementById('hvacCoincidenceFactor'), 
+            whCoincidenceFactor: document.getElementById('whCoincidenceFactor'),   
+            hvacParticipationRate: document.getElementById('hvacParticipationRate'), 
+            whParticipationRate: document.getElementById('whParticipationRate'),   
+            realWorldDerateFactor: document.getElementById('realWorldDerateFactor'),
+            // eventsPerYear: document.getElementById('eventsPerYear'), // Removed from inputs
+            // avgHoursPerEvent: document.getElementById('avgHoursPerEvent'), // Removed from inputs
         };
 
         // References to table bodies and chart container
@@ -532,17 +687,6 @@
         const whTableBody = document.querySelector('#whProjectionsTable tbody');
         const summaryTableBody = document.querySelector('#summaryTable tbody');
         const controllableLoadChart = document.getElementById('controllableLoadChart');
-
-        // References to overall summary elements (these are now unused in HTML but kept in JS for consistency)
-        // const summaryProjectionYears = document.getElementById('summaryProjectionYears');
-        // const summaryHvacActive = document.getElementById('summaryHvacActive');
-        // const summaryHvacLoad = document.getElementById('summaryHvacLoad');
-        // const summaryHvacEnergy = document.getElementById('summaryHvacEnergy');
-        // const summaryWhActive = document.getElementById('summaryWhActive');
-        // const summaryWhLoad = document.getElementById('summaryWhLoad');
-        // const summaryWhEnergy = document.getElementById('summaryWhEnergy');
-        // const summaryOverallLoad = document.getElementById('summaryOverallLoad');
-        // const summaryOverallEnergy = document.getElementById('summaryOverallEnergy');
 
         // --- Calculation Logic ---
 
@@ -570,32 +714,38 @@
          * This function simulates the enrollment, retirement, and active device count over time.
          * @param {string} deviceType - Identifier for the device ('hvac' or 'wh').
          * @param {object} assumptions - The model's assumption object.
+         * @param {object} fixedAssumptions - The model's fixed assumption object.
          * @returns {Array<object>} An array of annual projection objects for the device.
          */
-        function calculateDeviceProjections(deviceType, assumptions) {
+        function calculateDeviceProjections(deviceType, assumptions, fixedAssumptions) {
             const projections = [];
             const deviceLifespan = assumptions[`${deviceType}Lifespan`];
             const baseKwReduction = assumptions[`${deviceType}KwReduction`];
-            // Calculate the true addressable market based on penetration factor
-            const effectiveTotalAddressable = assumptions.totalAddressableHomeowners * assumptions.eligibleMarketPenetration;
-            const coincidenceFactor = assumptions.coincidenceFactor;
-            const participationRate = assumptions.participationRate;
+            const deviceCoincidenceFactor = assumptions[`${deviceType}CoincidenceFactor`]; 
+            const deviceParticipationRate = assumptions[`${deviceType}ParticipationRate`]; 
+            
+            // Calculate the true addressable market based on penetration factor from the total installed base
+            const effectiveEligibleInstalledBase = assumptions.totalAddressableHomeowners * assumptions.eligibleMarketPenetration;
+            
+            // Annual Replacement Opportunity is now a direct input
+            const annualReplacementOpportunityInput = assumptions[`${deviceType}AnnualReplacementOpportunity`];
+
             const realWorldDerateFactor = assumptions.realWorldDerateFactor;
-            const eventsPerYear = assumptions.eventsPerYear;
-            const avgHoursPerEvent = assumptions.avgHoursPerEvent;
+            const eventsPerYear = fixedAssumptions.eventsPerYear; // From fixed assumptions
+            const avgHoursPerEvent = fixedAssumptions.avgHoursPerEvent; // From fixed assumptions
 
             // Initialize data for Year 0 (before program launch)
             projections.push({
                 year: 0,
-                // FIX 2: Initialize Year 0 eligible market with penetration factor
-                eligibleMarketRemaining: effectiveTotalAddressable,
+                // Eligible Market Remaining now tracks the total eligible devices not yet enrolled
+                eligibleMarketRemaining: effectiveEligibleInstalledBase, 
                 annualAdoptionRate: 0,
                 newInstallations: 0,
                 cumulativeInstallations: 0,
                 devicesRetired: 0,
                 cumulativeActiveDevices: 0,
-                eventCapacity: 0, // Renamed from annualControllableLoad
-                annualEnergySaved: 0, // New
+                eventCapacity: 0, 
+                annualEnergySaved: 0,
             });
 
             // Loop through each projection year
@@ -603,12 +753,10 @@
                 const prevYearData = projections[y - 1];
                 const annualAdoptionRate = getAnnualAdoptionRate(y, assumptions);
 
-                // Calculate remaining eligible market (cannot go below zero)
-                const eligibleMarketRemaining = Math.max(0, prevYearData.eligibleMarketRemaining - prevYearData.newInstallations);
-                // Calculate new installations for the current year
-                // NOTE 5: Math.floor() rounds down. For very low adoption rates (<1 unit/year), this can result in 0 new installs.
-                const newInstallations = Math.floor(eligibleMarketRemaining * annualAdoptionRate);
-                // Sum up all installations to date
+                // New Installations are now driven by the annual replacement opportunity input
+                // and the adoption rate applied to that opportunity.
+                const newInstallations = Math.floor(annualReplacementOpportunityInput * annualAdoptionRate);
+                
                 const cumulativeInstallations = prevYearData.cumulativeInstallations + newInstallations;
 
                 // Calculate devices that retire this year based on their lifespan
@@ -624,12 +772,14 @@
                 // Calculate the net number of active devices contributing to load control
                 const cumulativeActiveDevices = Math.max(0, prevYearData.cumulativeActiveDevices + newInstallations - devicesRetired);
 
+                // Eligible Market Remaining for the table: total eligible minus what's cumulatively installed
+                const eligibleMarketRemaining = Math.max(0, effectiveEligibleInstalledBase - cumulativeInstallations);
+
                 // Calculate the instantaneous event capacity for this device type in this year
-                // Formula: Active Devices * Base kW Reduction * Coincidence Factor * Participation Rate * Real-World Derate Factor
-                const eventCapacity = cumulativeActiveDevices * baseKwReduction * coincidenceFactor * participationRate * realWorldDerateFactor;
+                // Now uses device-specific coincidence and participation factors
+                const eventCapacity = cumulativeActiveDevices * baseKwReduction * deviceCoincidenceFactor * deviceParticipationRate * realWorldDerateFactor;
 
                 // Calculate the annual energy saved (kWh) for this device type in this year
-                // Formula: Event Capacity (kW) * Events per Year * Average Hours per Event
                 const annualEnergySaved = eventCapacity * eventsPerYear * avgHoursPerEvent;
 
                 // Store the calculated data for the current year
@@ -653,8 +803,8 @@
          */
         function calculateModel() {
             // 1. Calculate device-specific projections
-            model.hvacProjections = calculateDeviceProjections('hvac', model.assumptions);
-            model.whProjections = calculateDeviceProjections('wh', model.assumptions);
+            model.hvacProjections = calculateDeviceProjections('hvac', model.assumptions, model.fixedAssumptions);
+            model.whProjections = calculateDeviceProjections('wh', model.assumptions, model.fixedAssumptions);
 
             // 2. Calculate summary for tables
             model.summary = [];
@@ -678,7 +828,7 @@
                 });
             }
 
-            // 3. Calculate overall summary for the top section
+            // 3. Calculate overall summary for the top section (data still calculated, just not rendered directly)
             const finalYear = model.assumptions.projectionYears;
             model.overallSummary.hvacActiveDevices = model.hvacProjections[finalYear] ? model.hvacProjections[finalYear].cumulativeActiveDevices : 0;
             model.overallSummary.hvacControllableLoad = model.hvacProjections[finalYear] ? model.hvacProjections[finalYear].eventCapacity : 0;
@@ -695,11 +845,10 @@
         // --- Rendering Logic ---
 
         /**
-         * Renders the overall summary section at the top of the model.
-         * This function is now empty as the summary section HTML is removed.
+         * This function is now empty as the overall summary section HTML is removed.
          */
         function renderOverallSummary() {
-            // No DOM elements to update for the overall summary section as it's removed.
+            // No DOM elements to update for the overall summary section.
             // The model.overallSummary object still gets calculated and holds the data.
         }
 
@@ -761,7 +910,7 @@
             data.forEach(row => {
                 if (row.year === 0) return; // Skip year 0 for chart as it's typically zero load
 
-                // FIX 1: Handle division by zero if maxMw is 0
+                // Handle division by zero if maxMw is 0
                 const barWidth = (maxMw === 0) ? 0 : (row.totalMw / maxMw) * 100;
                 
                 const chartRow = document.createElement('div');
@@ -781,7 +930,7 @@
          * Main render function to update all sections of the model.
          */
         function renderModel() {
-            renderOverallSummary(); // This call now does nothing for DOM updates
+            renderOverallSummary(); 
             renderProjectionsTable(hvacTableBody, model.hvacProjections);
             renderProjectionsTable(whTableBody, model.whProjections);
             renderSummaryTable(summaryTableBody, model.summary);
@@ -830,7 +979,7 @@
                     if (key.includes('adoptionRate') || key.includes('Factor') || key.includes('Rate') || key.includes('Penetration')) {
                         value *= 100;
                     }
-                    // FIX 4: Ensure specific input values (like kW reduction) are displayed with appropriate precision
+                    // Ensure specific input values (like kW reduction) are displayed with appropriate precision
                     if (key === 'hvacKwReduction' || key === 'whKwReduction') {
                         inputElements[key].value = value.toFixed(2);
                     } else {
